@@ -56,7 +56,7 @@ jobs:
   api-deploy-dev:
     working_directory: ~/vk-cloud-aws
 
-    <<: *test_dev_stack_deploy_steps
+    <<: *dev_stack_deploy_steps
 workflows:
   version: 2
   build-and-deploy:
