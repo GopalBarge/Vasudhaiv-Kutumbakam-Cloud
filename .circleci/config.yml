@@ -86,7 +86,8 @@ jobs:
       - checkout
       - aws-cli/setup:
           profile-name: example
-      - run: echo "Run your code here"
+      - run: aws cloudformation deploy \
+       --template-file /api/template.yaml
 orbs:
   aws-cli: circleci/aws-cli@1.2.1
 version: 2.1
