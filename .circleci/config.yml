@@ -1,7 +1,79 @@
+api_build_steps: &api_build_steps
+  steps:
+    - run: echo "Triggering branch $TRIGGER_BRANCH"
+    - run: |
+        echo "export IS_MASTER=$([[ $TRIGGER_BRANCH == 'master' ]] && echo 'true' || echo '')" >> $BASH_ENV
+    - run: echo "Is Master? IS_MASTER"
+    - checkout
+    - attach_workspace:
+        at: ~/vk-cloud-aws
+    - persist_to_workspace:
+        root: ~/vk-cloud-aws
+        paths:
+          - api
+dev_stack_deploy_steps: &dev_stack_deploy_steps
+  steps:
+    - run: |
+        # these are all provided by circleci project settings > environment variables
+        echo "export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID_TEST_ACCOUNT" >> $BASH_ENV
+        echo "export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY_TEST_ACCOUNT" >> $BASH_ENV
+    - checkout
+    - attach_workspace:
+        at: ~/vk-cloud-aws
+    - run:
+        name: Deploy Stack
+#        command: ./scorer-cloud-deploy.sh --parameter-local-file-path $PARAMETER_LOCAL_FILE_PATH $STACK_FLAG
+        command: sam deploy
+
 version: 2.1
 orbs:
-  node: circleci/node@3.0.0
+  aws-cloudformation: orbss/aws-cloudformation@0.1.6
+jobs:
+  prepare-workspace:
+    working_directory: ~/vk-cloud-aws
+    docker:
+      - image: circleci/node:12
+    steps:
+      - checkout
+      - persist_to_workspace:
+          root: ~/vk-cloud-aws
+          paths:
+            - config
+  api-build:
+    working_directory: ~/vk-cloud-aws
+    environment:
+      TRIGGER_BRANCH: << pipeline.git.branch >>
+
+    <<: *api_build_steps
+
+#  build_and_test:
+#    jobs:
+#      - sam/deploy:
+#          name: deploy-production
+#          s3-bucket: $AWS_ARTIFACT_BUCKET
+#          stack-name: vk-stack
+#          template: template.yaml
+  api-deploy-dev:
+    working_directory: ~/vk-cloud-aws
+
+    <<: *test_dev_stack_deploy_steps
 workflows:
-  node-tests:
+  version: 2
+  build-and-deploy:
     jobs:
-      - node/test
+      - prepare-workspace
+      - api-build:
+          requires:
+            - prepare-workspace
+      - build:
+          requires:
+            - api-build
+
+      - api-deploy-dev:
+          requires:
+            - build
+              #          filters:
+              #            branches:
+            #              only:
+            #                - dev
+
