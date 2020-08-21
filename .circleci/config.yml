@@ -86,10 +86,12 @@ jobs:
       - checkout
       - aws-cli/setup:
           profile-name: example
+      - run: pwd
+      - run: ls -lrt
       - run:
           name: Instaling cloudformation template
           command: |
-            aws cloudformation deploy --template-file ../api/template.yaml --stack-name vk --capabilities CAPABILITY_NAMED_IAM
+            aws cloudformation deploy --template-file api/template.yaml --stack-name vk --capabilities CAPABILITY_NAMED_IAM
 orbs:
   aws-cli: circleci/aws-cli@1.2.1
 version: 2.1
