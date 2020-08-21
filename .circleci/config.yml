@@ -93,5 +93,5 @@ version: 2.1
 workflows:
   aws-cli:
     jobs:
-      - aws-cli-example:
+      - aws-cli-example
 #          context: aws
