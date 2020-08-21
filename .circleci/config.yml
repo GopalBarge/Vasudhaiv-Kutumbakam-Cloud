@@ -94,4 +94,4 @@ workflows:
   aws-cli:
     jobs:
       - aws-cli-example:
-          context: aws
+#          context: aws
