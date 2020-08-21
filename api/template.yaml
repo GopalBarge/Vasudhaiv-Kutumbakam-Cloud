@@ -1,0 +1,35 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Cloud formation application for VK application
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 20
+
+Resources:
+  MemberTable:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      TableName: !Join
+        - ''
+        - - member
+      AttributeDefinitions:
+        - AttributeName: MemberID
+          AttributeType: S
+        - AttributeName: RelationID
+          AttributeType: S
+      KeySchema:
+        - AttributeName: MemberID
+          KeyType: HASH
+        - AttributeName: RelationID
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: '5'
+        WriteCapacityUnits: '5'
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      TimeToLiveSpecification:
+        AttributeName: TTL
+        Enabled: true
