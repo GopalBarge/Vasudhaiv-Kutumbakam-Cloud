@@ -88,7 +88,7 @@ jobs:
           profile-name: dev-deployment
       - run:
           name: Instaling cloudformation template
-          command: api/cloudformation/deploy.sh
+          command: bash ./api/cloudformation/deploy.sh
 orbs:
   aws-cli: circleci/aws-cli@1.2.1
 version: 2.1
