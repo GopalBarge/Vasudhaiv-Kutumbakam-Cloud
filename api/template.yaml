@@ -33,7 +33,7 @@ Resources:
       TimeToLiveSpecification:
         AttributeName: TTL
         Enabled: true
-  LF9MBL:
+  MyFunction:
     Type: 'AWS::Lambda::Function'
     Properties:
       Code:
@@ -42,74 +42,77 @@ Resources:
       FunctionName: SimpleRequest
       Handler: com.vk.api.lambda.RequestFunctionHandler
       MemorySize: 128
-      Role: 'arn:aws:iam::274402012893:role/lambda_basic_execution'
+      Role: 'arn:aws:iam::340885433605:role/LamdaDynamoDBRole'
+#      Policies:
+#        # Give DynamoDB Full Access to your Lambda Function
+#        - AmazonDynamoDBFullAccess
       Runtime: java8
-    Deployment:
-      Type: 'AWS::ApiGateway::Deployment'
-      Properties:
-        RestApiId: !Ref AGRA16PAA
-        Description: First Deployment
-        StageName: StagingStage
-      DependsOn:
-        - AGM25KFD
-    AGM25KFD:
-      Type: 'AWS::ApiGateway::Method'
-      Properties:
-        AuthorizationType: NONE
-        HttpMethod: POST
-        ResourceId: !Ref AGR2JDQ8
-        RestApiId: !Ref AGRA16PAA
-        Integration:
-          Type: AWS
-          IntegrationHttpMethod: POST
-          IntegrationResponses:
-            - StatusCode: 200
-          Uri: !Join
-            - ''
-            - - 'arn:aws:apigateway:'
-              - !Ref 'AWS::Region'
-              - ':lambda:path/2015-03-31/functions/'
-              - !GetAtt
-                - LF9MBL
-                - Arn
-              - /invocations
-        MethodResponses:
-          - StatusCode: 200
-      DependsOn:
-        - LF9MBL
-        - AGR2JDQ8
-        - LPI6K5
-    AGR2JDQ8:
-      Type: 'AWS::ApiGateway::Resource'
-      Properties:
-        RestApiId: !Ref AGRA16PAA
-        ParentId: !GetAtt
-          - AGRA16PAA
-          - RootResourceId
-        PathPart: divide
-      DependsOn:
-        - AGRA16PAA
-    AGRA16PAA:
-      Type: 'AWS::ApiGateway::RestApi'
-      Properties:
-        Name: CalculationApi
-    LPI6K5:
-      Type: 'AWS::Lambda::Permission'
-      Properties:
-        Action: 'lambda:invokeFunction'
-        FunctionName: !GetAtt
-          - LF9MBL
-          - Arn
-        Principal: apigateway.amazonaws.com
-        SourceArn: !Join
-          - ''
-          - - 'arn:aws:execute-api:'
-            - !Ref 'AWS::Region'
-            - ':'
-            - !Ref 'AWS::AccountId'
-            - ':'
-            - !Ref AGRA16PAA
-            - /*
+#  Deployment:
+#    Type: 'AWS::ApiGateway::Deployment'
+#    Properties:
+#      RestApiId: !Ref AGRA16PAA
+#      Description: First Deployment
+#      StageName: StagingStage
+#    DependsOn:
+#      - AGM25KFD
+#  AGM25KFD:
+#    Type: 'AWS::ApiGateway::Method'
+#    Properties:
+#      AuthorizationType: NONE
+#      HttpMethod: POST
+#      ResourceId: !Ref AGR2JDQ8
+#      RestApiId: !Ref AGRA16PAA
+#      Integration:
+#        Type: AWS
+#        IntegrationHttpMethod: POST
+#        IntegrationResponses:
+#          - StatusCode: 200
+#        Uri: !Join
+#          - ''
+#          - - 'arn:aws:apigateway:'
+#            - !Ref 'AWS::Region'
+#            - ':lambda:path/2015-03-31/functions/'
+#            - !GetAtt
+#              - LF9MBL
+#              - Arn
+#            - /invocations
+#      MethodResponses:
+#        - StatusCode: 200
+#    DependsOn:
+#      - LF9MBL
+#      - AGR2JDQ8
+#      - LPI6K5
+#  AGR2JDQ8:
+#    Type: 'AWS::ApiGateway::Resource'
+#    Properties:
+#      RestApiId: !Ref AGRA16PAA
+#      ParentId: !GetAtt
+#        - AGRA16PAA
+#        - RootResourceId
+#      PathPart: divide
+#    DependsOn:
+#      - AGRA16PAA
+#  AGRA16PAA:
+#    Type: 'AWS::ApiGateway::RestApi'
+#    Properties:
+#      Name: CalculationApi
+#  LPI6K5:
+#    Type: 'AWS::Lambda::Permission'
+#    Properties:
+#      Action: 'lambda:invokeFunction'
+#      FunctionName: !GetAtt
+#        - LF9MBL
+#        - Arn
+#      Principal: apigateway.amazonaws.com
+#      SourceArn: !Join
+#        - ''
+#        - - 'arn:aws:execute-api:'
+#          - !Ref 'AWS::Region'
+#          - ':'
+#          - !Ref 'AWS::AccountId'
+#          - ':'
+#          - !Ref AGRA16PAA
+#          - /*
 
 #
 #  HelloLambdaFunction:

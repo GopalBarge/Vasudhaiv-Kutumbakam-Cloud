@@ -1,5 +1,10 @@
 pwd
 ls -lrt
+
+pushd ./api
+gradle clean build
+popd
+
 pushd ./api/cloudformation
 echo 'pushd to ./api/cloudformation'
 pwd

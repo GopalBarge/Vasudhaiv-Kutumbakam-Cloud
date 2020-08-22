@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'Cloud formation application for VK application
+
+  '
+Globals:
+  Function:
+    Timeout: 20
+Resources:
+  MemberTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:
+        Fn::Join:
+        - ''
+        - - member
+      AttributeDefinitions:
+      - AttributeName: MemberID
+        AttributeType: S
+      - AttributeName: RelationID
+        AttributeType: S
+      KeySchema:
+      - AttributeName: MemberID
+        KeyType: HASH
+      - AttributeName: RelationID
+        KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: '5'
+        WriteCapacityUnits: '5'
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      TimeToLiveSpecification:
+        AttributeName: TTL
+        Enabled: true
+  MyFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code: MyFunction
+      FunctionName: SimpleRequest
+      Handler: com.vk.api.lambda.RequestFunctionHandler
+      MemorySize: 128
+      Role: arn:aws:iam::340885433605:role/LamdaDynamoDBRole
+      Runtime: java8
