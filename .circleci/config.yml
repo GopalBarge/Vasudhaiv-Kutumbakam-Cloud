@@ -88,8 +88,7 @@ jobs:
           profile-name: dev-deployment
       - run:
           name: Instaling cloudformation template
-          command: |
-            aws cloudformation deploy --template-file api/template.yaml --stack-name vk --capabilities CAPABILITY_NAMED_IAM
+          command: api/cloudformation/deploy.sh
 orbs:
   aws-cli: circleci/aws-cli@1.2.1
 version: 2.1
