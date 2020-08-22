@@ -80,14 +80,12 @@
 
 
 jobs:
-  aws-cli-example:
+  build-dev:
     executor: aws-cli/default
     steps:
       - checkout
       - aws-cli/setup:
-          profile-name: example
-      - run: pwd
-      - run: ls -lrt
+          profile-name: dev-deployment
       - run:
           name: Instaling cloudformation template
           command: |
@@ -98,5 +96,5 @@ version: 2.1
 workflows:
   aws-cli:
     jobs:
-      - aws-cli-example
+      - build-dev
 #          context: aws
