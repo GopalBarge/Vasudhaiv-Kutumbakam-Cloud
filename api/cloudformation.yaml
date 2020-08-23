@@ -5,8 +5,17 @@ Description: >
 
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
-  Function:
-    Timeout: 20
+  Api:
+    EndpointConfiguration: REGIONAL
+
+Parameters:
+  Stage:
+    Type: String
+    Default: dev
+  SNSTopic:
+    Type: String
+  SQSQueue:
+    Type: String
 
 Resources:
   MemberTable:
@@ -33,103 +42,67 @@ Resources:
       TimeToLiveSpecification:
         AttributeName: TTL
         Enabled: true
-  MyFunction:
-    Type: 'AWS::Lambda::Function'
+  ApiGatewayApi:
+    Type: AWS::Serverless::Api
     Properties:
-      Code:
-        S3Bucket: lambda-functions
-        S3Key: JavaLambdaDeployment.zip
-      FunctionName: SimpleRequest
-      Handler: com.vk.api.lambda.RequestFunctionHandler
-      MemorySize: 128
-      Role: 'arn:aws:iam::340885433605:role/LamdaDynamoDBRole'
-#      Policies:
-#        # Give DynamoDB Full Access to your Lambda Function
-#        - AmazonDynamoDBFullAccess
+      StageName:
+        Ref: Stage
+      Variables:
+        Stage:
+          Ref: Stage
+  MyServiceFunction:
+    Type: AWS::Serverless::Function
+    FunctionName: "ServerlessSpringApi-MyServiceFunction"
+    Properties:
+      Handler: my.service.StreamLambdaHandler::handleRequest
       Runtime: java8
-#  Deployment:
-#    Type: 'AWS::ApiGateway::Deployment'
-#    Properties:
-#      RestApiId: !Ref AGRA16PAA
-#      Description: First Deployment
-#      StageName: StagingStage
-#    DependsOn:
-#      - AGM25KFD
-#  AGM25KFD:
-#    Type: 'AWS::ApiGateway::Method'
-#    Properties:
-#      AuthorizationType: NONE
-#      HttpMethod: POST
-#      ResourceId: !Ref AGR2JDQ8
-#      RestApiId: !Ref AGRA16PAA
-#      Integration:
-#        Type: AWS
-#        IntegrationHttpMethod: POST
-#        IntegrationResponses:
-#          - StatusCode: 200
-#        Uri: !Join
-#          - ''
-#          - - 'arn:aws:apigateway:'
-#            - !Ref 'AWS::Region'
-#            - ':lambda:path/2015-03-31/functions/'
-#            - !GetAtt
-#              - LF9MBL
-#              - Arn
-#            - /invocations
-#      MethodResponses:
-#        - StatusCode: 200
-#    DependsOn:
-#      - LF9MBL
-#      - AGR2JDQ8
-#      - LPI6K5
-#  AGR2JDQ8:
-#    Type: 'AWS::ApiGateway::Resource'
-#    Properties:
-#      RestApiId: !Ref AGRA16PAA
-#      ParentId: !GetAtt
-#        - AGRA16PAA
-#        - RootResourceId
-#      PathPart: divide
-#    DependsOn:
-#      - AGRA16PAA
-#  AGRA16PAA:
-#    Type: 'AWS::ApiGateway::RestApi'
-#    Properties:
-#      Name: CalculationApi
-#  LPI6K5:
-#    Type: 'AWS::Lambda::Permission'
-#    Properties:
-#      Action: 'lambda:invokeFunction'
-#      FunctionName: !GetAtt
-#        - LF9MBL
-#        - Arn
-#      Principal: apigateway.amazonaws.com
-#      SourceArn: !Join
-#        - ''
-#        - - 'arn:aws:execute-api:'
-#          - !Ref 'AWS::Region'
-#          - ':'
-#          - !Ref 'AWS::AccountId'
-#          - ':'
-#          - !Ref AGRA16PAA
-#          - /*
+      CodeUri: "build/distributions/api.zip"
+      MemorySize: 2048
+      Policies: AWSLambdaBasicExecutionRole
+      Timeout: 30
+      Environment:
+        Variables:
+          # Specify here variables for deployment,
+          # override local using sam-local-env.json
+          SPRING_PROFILES_ACTIVE: aws
+      Events:
+        GetResource:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayApi
+            Path: /ping
+            Method: GET
+        CheckWebsiteScheduledEvent:
+          Type: Schedule
+          Properties:
+            Schedule: rate(5 minutes)
+        ReceiveFromSNS:
+          Type: SNS
+          Properties:
+            Topic:
+              Ref: SNSTopic
+        ReceiveFromQueue:
+          Type: SQS
+          Properties:
+            Queue:
+              Ref: SQSQueue
+#Outputs:
+#  MyServiceApi:
+#    Description: URL for application
+#    Value: !Sub 'https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/ping'
+#    Export:
+#      Name: MyServiceApi
 
-#
-#  HelloLambdaFunction:
-#    Type: 'AWS::Serverless::Function'
+#  MyFunction:
+#    Type: 'AWS::Lambda::Function'
 #    Properties:
-#      Handler: api/event_dispatcher.lambda_handler
-#      FunctionName: HelloWorld
-#      Policies:
-#        - Version: "2012-10-17"
-#          Statement:
-#            - Effect: Allow
-#              Action:
-#                - "dynamodb:GetItem"
-#                - "dynamodb:Query"
-#                - "dynamodb:Scan"
-#                - "dynamodb:DeleteItem"
-#                - "dynamodb:PutItem"
-#                - "dynamodb:UpdateItem"
-#              Resource:
-#                - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/member'
+#      Code:
+#        S3Bucket: lambda-functions
+#        S3Key: JavaLambdaDeployment.zip
+#      FunctionName: SimpleRequest
+#      Handler: com.vk.api.lambda.RequestFunctionHandler
+#      MemorySize: 128
+#      Role: 'arn:aws:iam::340885433605:role/LamdaDynamoDBRole'
+#      Runtime: java8
+

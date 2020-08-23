@@ -1,99 +1,72 @@
-#api_build_steps: &api_build_steps
-#  steps:
-#    - run: echo "Triggering branch $TRIGGER_BRANCH"
-#    - run: |
-#        echo "export IS_MASTER=$([[ $TRIGGER_BRANCH == 'master' ]] && echo 'true' || echo '')" >> $BASH_ENV
-#    - run: echo "Is Master? IS_MASTER"
-#    - checkout
-#    - attach_workspace:
-#        at: ~/vk-cloud-aws
-#    - persist_to_workspace:
-#        root: ~/vk-cloud-aws
-#        paths:
-#          - api
-#dev_stack_deploy_steps: &dev_stack_deploy_steps
-#  steps:
-#    - run: |
-#        # these are all provided by circleci project settings > environment variables
-#        echo "export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID_TEST_ACCOUNT" >> $BASH_ENV
-#        echo "export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY_TEST_ACCOUNT" >> $BASH_ENV
-#    - checkout
-#    - attach_workspace:
-#        at: ~/vk-cloud-aws
-#    - run:
-#        name: Deploy Stack
-##        command: ./scorer-cloud-deploy.sh --parameter-local-file-path $PARAMETER_LOCAL_FILE_PATH $STACK_FLAG
-#        command: sam deploy
-#
-#version: 2.1
-#orbs:
-#  aws-cloudformation: orbss/aws-cloudformation@0.1.6
+
 #jobs:
-#  prepare-workspace:
-#    working_directory: ~/vk-cloud-aws
-#    docker:
-#      - image: circleci/node:12
+#  build-dev:
+#    executor: aws-cli/default
 #    steps:
 #      - checkout
-#      - persist_to_workspace:
-#          root: ~/vk-cloud-aws
-#          paths:
-#            - config
-#  api-build:
-#    working_directory: ~/vk-cloud-aws
-#    docker:
-#      - image: circleci/node:12
-#    environment:
-#      TRIGGER_BRANCH: << pipeline.git.branch >>
-#    <<: *api_build_steps
-#
-##  build_and_test:
-##    jobs:
-##      - sam/deploy:
-##          name: deploy-production
-##          s3-bucket: $AWS_ARTIFACT_BUCKET
-##          stack-name: vk-stack
-##          template: template.yaml
-#  api-deploy-dev:
-#    working_directory: ~/vk-cloud-aws
-#    <<: *dev_stack_deploy_steps
+#      - aws-cli/setup:
+#          profile-name: dev-deployment
+#      - run:
+#          name: Instaling cloudformation template
+#          command: bash api/deploy.sh
+#orbs:
+#  aws-cli: circleci/aws-cli@1.2.1
+#version: 2.1
 #workflows:
-#  version: 2
-#  build-and-deploy:
+#  aws-cli:
 #    jobs:
-#      - prepare-workspace
-#      - api-build:
-#          requires:
-#            - prepare-workspace
-#      - build:
-#          requires:
-#            - api-build
-#
-#      - api-deploy-dev:
-#          requires:
-#            - build
-#              #          filters:
-#              #            branches:
-#            #              only:
-#            #                - dev
-#
+#      - build-dev
 
+
+version: 2
 
 jobs:
-  build-dev:
-    executor: aws-cli/default
+  # Build and run tests
+  build:
+    working_directory: ~/vk-workspace
+    docker:
+      # https://discuss.circleci.com/t/spring-boot-application-build-failed-due-to-test-failure/27687
+      - image: circleci/openjdk:8u171
     steps:
       - checkout
-      - aws-cli/setup:
-          profile-name: dev-deployment
       - run:
-          name: Instaling cloudformation template
-          command: bash api/deploy.sh
-orbs:
-  aws-cli: circleci/aws-cli@1.2.1
-version: 2.1
+          name: Install AWS cli
+          command: |
+            python --version
+            cat /etc/issue
+            sudo apt-get update
+            sudo apt-get install -y python-pip
+            sudo pip install awscli
+            sudo pip install aws-sam-cli
+      - run:
+          name: Configure AWS cli
+          command: |
+            aws configure set aws_access_key_id ${AWS_ACCESS_KEY_ID}
+            aws configure set aws_secret_access_key ${AWS_SECRET_ACCESS_KEY}
+            aws configure set default.region ${AWS_DEFAULT_REGION}
+            aws configure list
+      - run:
+          name: Build and deploy to AWS
+          command: ./deploy-to-aws
+      - save_cache:
+          key: docs-{{ checksum "build.gradle" }}
+          paths:
+            - ~/.m2
+      - store_artifacts:
+          path: ~/serverless/build/reports
+      - store_artifacts:
+          path: ~/serverless/build/test-results
+      - run:
+          when: on_fail
+          command: find > ~/serverless/all-files.txt
+      - store_artifacts:
+          path: ~/serverless/all-files.txt
 workflows:
-  aws-cli:
+  version: 2
+  build:
     jobs:
-      - build-dev
-#          context: aws
+      - build:
+          filters:
+            branches:
+              only: master
+              ignore: gh-pages
