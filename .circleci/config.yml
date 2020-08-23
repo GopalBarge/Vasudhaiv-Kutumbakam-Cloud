@@ -47,7 +47,7 @@ jobs:
             aws configure list
       - run:
           name: Build and deploy to AWS
-          command: ./deploy-to-aws
+          command: bash api/deploy.sh
       - save_cache:
           key: docs-{{ checksum "build.gradle" }}
           paths:
@@ -66,7 +66,7 @@ workflows:
   build:
     jobs:
       - build:
-          filters:
-            branches:
-              only: master
-              ignore: gh-pages
+#          filters:
+#            branches:
+#              only: master
+#              ignore: gh-pages
